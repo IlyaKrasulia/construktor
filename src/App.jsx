@@ -1,19 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/pagination";
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 const PRODUCTS = [
-  { id: 1,  name: "Космічна Станція",   img: "https://picsum.photos/seed/lego1/400/500",  price: 500, pieces: 342, age: "8+", description: "Збудуй міжгалактичну станцію з деталями, що деталізують кожну кімнату й відсік. Ідеально для юних дослідників космосу." },
-  { id: 2,  name: "Лісовий Замок",      img: "https://picsum.photos/seed/lego2/400/500",  price: 500, pieces: 518, age: "9+", description: "Середньовічна фортеця серед дерев. Підніми міст, виставляй варту та захищай королівство від ворогів." },
-  { id: 3,  name: "Підводний Дослідник",img: "https://picsum.photos/seed/lego3/400/500",  price: 500, pieces: 275, age: "7+", description: "Пірнай углиб океану на борту мінісубмарини. В наборі є акула, кораль та таємна печера." },
-  { id: 4,  name: "Місто Майбутнього",  img: "https://picsum.photos/seed/lego4/400/500",  price: 500, pieces: 610, age: "10+", description: "Мегаполіс 2080 року з літаючими авто, хмарочосами на магнітній подушці та зарядними станціями." },
-  { id: 5,  name: "Піратський Корабель",img: "https://picsum.photos/seed/lego5/400/500",  price: 500, pieces: 432, age: "8+", description: "Мчи під чорним вітрилом! Корабель має 3 щогли, каюту капітана та гарматну палубу." },
-  { id: 6,  name: "Динозавр-Рекс",      img: "https://picsum.photos/seed/lego6/400/500",  price: 500, pieces: 189, age: "6+", description: "Величезний тиранозавр з рухомою щелепою та хвостом. Чудовий перший набір для маленьких будівельників." },
-  { id: 7,  name: "Ракетний Стартовий Майданчик", img: "https://picsum.photos/seed/lego7/400/500", price: 500, pieces: 556, age: "9+", description: "Запускай ракету у небо! Набір включає пускову вежу, стартовий центр та двох астронавтів." },
-  { id: 8,  name: "Казковий Будинок",   img: "https://picsum.photos/seed/lego8/400/500",  price: 500, pieces: 390, age: "7+", description: "Триповерховий будиночок з сонячними панелями, садочком та зробленим вручну дахом із черепиці." },
-  { id: 9,  name: "Гоночне Авто",       img: "https://picsum.photos/seed/lego9/400/500",  price: 500, pieces: 224, age: "6+", description: "Болід Формули 1 у масштабі 1:20. Відкривається капот, обертаються колеса. Готовий до гонки!" },
-  { id: 10, name: "Арктична База",      img: "https://picsum.photos/seed/lego10/400/500", price: 500, pieces: 480, age: "8+", description: "Дослідна станція на Північному полюсі. В наборі сніговий всюдихід, вчені та білий ведмідь." },
-  { id: 11, name: "Чарівний Ліс",       img: "https://picsum.photos/seed/lego11/400/500", price: 500, pieces: 315, age: "7+", description: "Зачарований ліс з будинком на дереві, мостиком та феями. Казка, яку можна тримати в руках." },
-  { id: 12, name: "Роботизований Завод", img: "https://picsum.photos/seed/lego12/400/500",price: 500, pieces: 720, age: "11+", description: "Автоматизований завод майбутнього з рухомими конвеєрами, роботизованими руками та 3 фігурками інженерів." },
+  { id: 1,  name: "Космічна Станція",   img: "https://picsum.photos/seed/lego1/400/500",  images: ["https://picsum.photos/seed/lego1/400/500","https://picsum.photos/seed/lego1b/400/500","https://picsum.photos/seed/lego1c/400/500"],  price: 500, pieces: 342, age: "8+", description: "Збудуй міжгалактичну станцію з деталями, що деталізують кожну кімнату й відсік. Ідеально для юних дослідників космосу." },
+  { id: 2,  name: "Лісовий Замок",      img: "https://picsum.photos/seed/lego2/400/500",  images: ["https://picsum.photos/seed/lego2/400/500","https://picsum.photos/seed/lego2b/400/500","https://picsum.photos/seed/lego2c/400/500"],  price: 500, pieces: 518, age: "9+", description: "Середньовічна фортеця серед дерев. Підніми міст, виставляй варту та захищай королівство від ворогів." },
+  { id: 3,  name: "Підводний Дослідник",img: "https://picsum.photos/seed/lego3/400/500",  images: ["https://picsum.photos/seed/lego3/400/500","https://picsum.photos/seed/lego3b/400/500","https://picsum.photos/seed/lego3c/400/500"],  price: 500, pieces: 275, age: "7+", description: "Пірнай углиб океану на борту мінісубмарини. В наборі є акула, кораль та таємна печера." },
+  { id: 4,  name: "Місто Майбутнього",  img: "https://picsum.photos/seed/lego4/400/500",  images: ["https://picsum.photos/seed/lego4/400/500","https://picsum.photos/seed/lego4b/400/500","https://picsum.photos/seed/lego4c/400/500"],  price: 500, pieces: 610, age: "10+", description: "Мегаполіс 2080 року з літаючими авто, хмарочосами на магнітній подушці та зарядними станціями." },
+  { id: 5,  name: "Піратський Корабель",img: "https://picsum.photos/seed/lego5/400/500",  images: ["https://picsum.photos/seed/lego5/400/500","https://picsum.photos/seed/lego5b/400/500","https://picsum.photos/seed/lego5c/400/500"],  price: 500, pieces: 432, age: "8+", description: "Мчи під чорним вітрилом! Корабель має 3 щогли, каюту капітана та гарматну палубу." },
+  { id: 6,  name: "Динозавр-Рекс",      img: "https://picsum.photos/seed/lego6/400/500",  images: ["https://picsum.photos/seed/lego6/400/500","https://picsum.photos/seed/lego6b/400/500","https://picsum.photos/seed/lego6c/400/500"],  price: 500, pieces: 189, age: "6+", description: "Величезний тиранозавр з рухомою щелепою та хвостом. Чудовий перший набір для маленьких будівельників." },
+  { id: 7,  name: "Ракетний Стартовий Майданчик", img: "https://picsum.photos/seed/lego7/400/500", images: ["https://picsum.photos/seed/lego7/400/500","https://picsum.photos/seed/lego7b/400/500","https://picsum.photos/seed/lego7c/400/500"], price: 500, pieces: 556, age: "9+", description: "Запускай ракету у небо! Набір включає пускову вежу, стартовий центр та двох астронавтів." },
+  { id: 8,  name: "Казковий Будинок",   img: "https://picsum.photos/seed/lego8/400/500",  images: ["https://picsum.photos/seed/lego8/400/500","https://picsum.photos/seed/lego8b/400/500","https://picsum.photos/seed/lego8c/400/500"],  price: 500, pieces: 390, age: "7+", description: "Триповерховий будиночок з сонячними панелями, садочком та зробленим вручну дахом із черепиці." },
+  { id: 9,  name: "Гоночне Авто",       img: "https://picsum.photos/seed/lego9/400/500",  images: ["https://picsum.photos/seed/lego9/400/500","https://picsum.photos/seed/lego9b/400/500","https://picsum.photos/seed/lego9c/400/500"],  price: 500, pieces: 224, age: "6+", description: "Болід Формули 1 у масштабі 1:20. Відкривається капот, обертаються колеса. Готовий до гонки!" },
+  { id: 10, name: "Арктична База",      img: "https://picsum.photos/seed/lego10/400/500", images: ["https://picsum.photos/seed/lego10/400/500","https://picsum.photos/seed/lego10b/400/500","https://picsum.photos/seed/lego10c/400/500"], price: 500, pieces: 480, age: "8+", description: "Дослідна станція на Північному полюсі. В наборі сніговий всюдихід, вчені та білий ведмідь." },
+  { id: 11, name: "Чарівний Ліс",       img: "https://picsum.photos/seed/lego11/400/500", images: ["https://picsum.photos/seed/lego11/400/500","https://picsum.photos/seed/lego11b/400/500","https://picsum.photos/seed/lego11c/400/500"], price: 500, pieces: 315, age: "7+", description: "Зачарований ліс з будинком на дереві, мостиком та феями. Казка, яку можна тримати в руках." },
+  { id: 12, name: "Роботизований Завод", img: "https://picsum.photos/seed/lego12/400/500",images: ["https://picsum.photos/seed/lego12/400/500","https://picsum.photos/seed/lego12b/400/500","https://picsum.photos/seed/lego12c/400/500"],price: 500, pieces: 720, age: "11+", description: "Автоматизований завод майбутнього з рухомими конвеєрами, роботизованими руками та 3 фігурками інженерів." },
 ];
 
 // ─── Header ───────────────────────────────────────────────────────────────────
@@ -96,11 +100,13 @@ function ProductList({ products, onDetails, onBuy }) {
 
 // ─── Bottom Sheet Modal ───────────────────────────────────────────────────────
 function BottomSheet({ product, onClose, onBuy }) {
-  const [quantity, setQuantity] = useState(1);
+  const swiperRef = useRef(null);
 
-  // Reset quantity when product changes
+  // Reset swiper when product changes
   useEffect(() => {
-    setQuantity(1);
+    if (swiperRef.current) {
+      swiperRef.current.slideTo(0, 0);
+    }
   }, [product]);
 
   // Close on Escape key
@@ -122,8 +128,6 @@ function BottomSheet({ product, onClose, onBuy }) {
   }, [product]);
 
   if (!product) return null;
-
-  const total = product.price * quantity;
 
   return (
     <>
@@ -149,7 +153,7 @@ function BottomSheet({ product, onClose, onBuy }) {
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm hover:bg-gray-200 transition-colors z-10"
           aria-label="Закрити"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-4 h-4 text-gray-600">
@@ -157,13 +161,24 @@ function BottomSheet({ product, onClose, onBuy }) {
           </svg>
         </button>
 
-        {/* Image */}
+        {/* Photo Swiper */}
         <div className="relative aspect-[16/9] sm:aspect-[2/1] overflow-hidden bg-gray-50">
-          <img
-            src={product.img}
-            alt={product.name}
-            className="w-full h-full object-cover"
-          />
+          <Swiper
+            modules={[Pagination]}
+            pagination={{ clickable: true }}
+            onSwiper={(swiper) => { swiperRef.current = swiper; }}
+            className="w-full h-full"
+          >
+            {product.images.map((src, i) => (
+              <SwiperSlide key={i}>
+                <img
+                  src={src}
+                  alt={`${product.name} — фото ${i + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </SwiperSlide>
+            ))}
+          </Swiper>
         </div>
 
         {/* Content */}
@@ -176,38 +191,15 @@ function BottomSheet({ product, onClose, onBuy }) {
               </h2>
             </div>
             <span className="font-extrabold text-2xl text-indigo-600 whitespace-nowrap">
-              {total} ₴
+              {product.price} ₴
             </span>
           </div>
           <p className="text-sm text-gray-500 leading-relaxed">
             {product.description}
           </p>
 
-          {/* Quantity Slider */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">
-                Кількість
-              </label>
-              <span className="text-sm font-bold text-indigo-600">{quantity} шт.</span>
-            </div>
-            <input
-              type="range"
-              min="1"
-              max="10"
-              value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-indigo-600"
-              aria-label="Кількість товару"
-            />
-            <div className="flex justify-between text-xs text-gray-400">
-              <span>1</span>
-              <span>10</span>
-            </div>
-          </div>
-
           <button
-            onClick={() => { onBuy(product, quantity); onClose(); }}
+            onClick={() => { onBuy(product, 1); onClose(); }}
             className="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-base rounded-2xl py-3.5 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2"
           >
             Купити в 1 клік
