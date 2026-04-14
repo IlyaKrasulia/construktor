@@ -17,32 +17,16 @@ const PRODUCTS = [
 ];
 
 // ─── Header ───────────────────────────────────────────────────────────────────
-function Header({ cartCount, onCartClick }) {
+function Header() {
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
-      <div className="max-w-2xl mx-auto flex items-center justify-between px-4 h-14">
+      <div className="max-w-2xl mx-auto flex items-center px-4 h-14">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🧱</span>
           <span className="font-bold text-lg tracking-tight text-gray-900">
             Construktor
           </span>
         </div>
-        <button
-          onClick={onCartClick}
-          className="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
-          aria-label="Кошик"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-gray-700">
-            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <path d="M16 10a4 4 0 01-8 0" />
-          </svg>
-          {cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-indigo-600 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-              {cartCount}
-            </span>
-          )}
-        </button>
       </div>
     </header>
   );
@@ -112,6 +96,13 @@ function ProductList({ products, onDetails, onBuy }) {
 
 // ─── Bottom Sheet Modal ───────────────────────────────────────────────────────
 function BottomSheet({ product, onClose, onBuy }) {
+  const [quantity, setQuantity] = useState(1);
+
+  // Reset quantity when product changes
+  useEffect(() => {
+    setQuantity(1);
+  }, [product]);
+
   // Close on Escape key
   useEffect(() => {
     if (!product) return;
@@ -131,6 +122,8 @@ function BottomSheet({ product, onClose, onBuy }) {
   }, [product]);
 
   if (!product) return null;
+
+  const total = product.price * quantity;
 
   return (
     <>
@@ -183,17 +176,41 @@ function BottomSheet({ product, onClose, onBuy }) {
               </h2>
             </div>
             <span className="font-extrabold text-2xl text-indigo-600 whitespace-nowrap">
-              {product.price} ₴
+              {total} ₴
             </span>
           </div>
           <p className="text-sm text-gray-500 leading-relaxed">
             {product.description}
           </p>
+
+          {/* Quantity Slider */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-700">
+                Кількість
+              </label>
+              <span className="text-sm font-bold text-indigo-600">{quantity} шт.</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={quantity}
+              onChange={(e) => setQuantity(Number(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-indigo-600"
+              aria-label="Кількість товару"
+            />
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>1</span>
+              <span>10</span>
+            </div>
+          </div>
+
           <button
-            onClick={() => { onBuy(product); onClose(); }}
+            onClick={() => { onBuy(product, quantity); onClose(); }}
             className="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-base rounded-2xl py-3.5 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2"
           >
-            🛒 Купити в 1 клік
+            Купити в 1 клік
           </button>
         </div>
       </div>
@@ -201,37 +218,138 @@ function BottomSheet({ product, onClose, onBuy }) {
   );
 }
 
-// ─── Toast Notification ───────────────────────────────────────────────────────
-function Toast({ message, onDismiss }) {
-  useEffect(() => {
-    if (!message) return;
-    const t = setTimeout(onDismiss, 2500);
-    return () => clearTimeout(t);
-  }, [message, onDismiss]);
+// ─── Order Modal ──────────────────────────────────────────────────────────────
+function OrderModal({ order, onClose }) {
+  const [form, setForm] = useState({ name: "", phone: "" });
+  const [submitted, setSubmitted] = useState(false);
 
-  if (!message) return null;
+  useEffect(() => {
+    if (!order) return;
+    setForm({ name: "", phone: "" });
+    setSubmitted(false);
+  }, [order]);
+
+  useEffect(() => {
+    if (!order) return;
+    const handleKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [order, onClose]);
+
+  useEffect(() => {
+    if (order) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [order]);
+
+  if (!order) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitted(true);
+  };
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-gray-900 text-white text-sm font-medium px-5 py-3 rounded-2xl shadow-lg whitespace-nowrap animate-fade-in">
-      {message}
-    </div>
+    <>
+      <div
+        className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Оформлення замовлення"
+        className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+      >
+        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 relative animate-fade-in">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+            aria-label="Закрити"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-4 h-4 text-gray-600">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+
+          {submitted ? (
+            <div className="text-center py-4 space-y-3">
+              <div className="text-4xl">✅</div>
+              <h3 className="font-bold text-lg text-gray-900">Замовлення прийнято!</h3>
+              <p className="text-sm text-gray-500">Ми зв&#39;яжемося з вами найближчим часом.</p>
+              <button
+                onClick={onClose}
+                className="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl py-3 transition-all"
+              >
+                Закрити
+              </button>
+            </div>
+          ) : (
+            <>
+              <h3 className="font-bold text-lg text-gray-900 mb-1">Оформлення замовлення</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                <span className="font-medium text-gray-700">{order.product.name}</span>
+                {order.quantity > 1 && <span> × {order.quantity}</span>}
+                <span className="ml-1 text-indigo-600 font-bold">— {order.product.price * order.quantity} ₴</span>
+              </p>
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ваше ім&#39;я
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder="Іван Іваненко"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Номер телефону
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={form.phone}
+                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                    placeholder="+380 XX XXX XX XX"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-base rounded-2xl py-3 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2"
+                >
+                  Підтвердити замовлення
+                </button>
+              </form>
+            </>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [cart, setCart] = useState([]);
-  const [toast, setToast] = useState("");
+  const [orderData, setOrderData] = useState(null);
 
-  const handleBuy = (product) => {
-    setCart((prev) => [...prev, product]);
-    setToast(`✅ «${product.name}» додано до кошика!`);
+  const handleBuy = (product, quantity = 1) => {
+    setOrderData({ product, quantity });
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header cartCount={cart.length} onCartClick={() => setToast(`🛒 Товарів у кошику: ${cart.length}`)} />
+      <Header />
 
       {/* Hero Banner */}
       <div className="max-w-2xl mx-auto px-4 pt-5 pb-4">
@@ -266,8 +384,11 @@ export default function App() {
         onBuy={handleBuy}
       />
 
-      {/* Toast */}
-      <Toast message={toast} onDismiss={() => setToast("")} />
+      {/* Order Modal */}
+      <OrderModal
+        order={orderData}
+        onClose={() => setOrderData(null)}
+      />
     </div>
   );
 }
